@@ -1,6 +1,13 @@
 .container {
   max-width: 1024px;
+  min-height: 100vh;
   margin: 0 auto;
   padding: 32px;
   background: #ffffff;
+  display: flex;
+  flex-direction: column;
+}
+
+.example {
+  margin: auto;
 }

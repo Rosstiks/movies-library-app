@@ -1,5 +1,5 @@
 import React from 'react';
-import { format } from 'date-fns';
+import { Spin, Alert } from 'antd';
 import MovieDBService from '../../services/moviedb-service/moviedb-service';
 
 import './app.css';
@@ -16,43 +16,44 @@ export default class App extends React.Component {
 
   state = {
     movies: [],
+    loading: true,
+    loadingError: false,
     // currentPage: 1,
     // keyword: '',
   };
 
   async getMoviesData(keyword) {
-    const responseGenres = await this.movieDBService.getActualGenresList();
-    const genresList = {};
-    responseGenres.forEach((el) => {
-      genresList[el.id] = el.name;
-    });
-    const responseMovies = await this.movieDBService.searchMovies(keyword);
-    const movies = responseMovies.map((el) => this.createDataMovie(el, genresList));
-    this.setState({ movies });
-  }
-
-  createDataMovie(data, genresList) {
-    const genres = data.genre_ids.map((id) => ({ id, name: genresList[id] }));
-    return {
-      id: data.id,
-      title: data.title,
-      overview: data.overview,
-      date: format(new Date(data.release_date), 'MMM d, y'),
-      poster: `https://image.tmdb.org/t/p/w500${data.poster_path}`,
-      genres,
-      vote: data.vote_average,
-      popularity: Math.trunc(data.popularity) / 10,
-    };
+    try {
+      const responseMovies = await this.movieDBService.searchMovies(keyword);
+      this.setState({ movies: responseMovies, loading: false });
+    } catch (er) {
+      this.setState({ loadingError: true, loading: false });
+    }
   }
 
   render() {
-    const { movies } = this.state;
+    const { movies, loading, loadingError } = this.state;
+    const errorMessage = 'Sorry, something went wrong. Try to reload the page and repeat';
+
+    const error = loadingError ? <Alert message="Bad news" description={errorMessage} showIcon type="error" /> : null;
+    const speaner = loading ? <Speaner /> : null;
+    const content = !(loading || loadingError) ? <MovieList movies={movies} /> : null;
 
     return (
       <div className="container">
-        <Header />
-        <MovieList movies={movies} />
+        <Header onChange={this.getMovie} />
+        {error}
+        {speaner}
+        {content}
       </div>
     );
   }
+}
+
+function Speaner() {
+  return (
+    <div className="example">
+      <Spin size="large" />
+    </div>
+  );
 }
