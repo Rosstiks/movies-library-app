@@ -7,50 +7,69 @@ import MovieList from '../movie-list';
 import Header from '../header';
 
 export default class App extends React.Component {
-  movieDBService = new MovieDBService();
+  static messages = {
+    errorMessage: 'Sorry, something went wrong. Try to reload the page and repeat.',
+    noResultsMessage: 'Sorry, no results were found. Try to change your request.',
+  };
 
-  constructor(props) {
-    super(props);
-    this.getMoviesData('return');
-  }
+  movieDBService = new MovieDBService();
 
   state = {
     movies: [],
+    currentSearch: '',
+    currentPage: 1,
+    totalResults: 0,
     loading: true,
     loadingError: false,
-    // currentPage: 1,
-    // keyword: '',
   };
 
-  async getMoviesData(keyword) {
+  componentDidMount() {
+    const { currentPage, currentSearch } = this.state;
+    this.getMoviesData(currentPage, currentSearch);
+  }
+
+  getMoviesData = async (page, keyword) => {
+    if (keyword === '') {
+      this.setState({ movies: [], currentSearch: '', totalResults: 0, loading: false });
+      return;
+    }
     try {
-      const responseMovies = await this.movieDBService.searchMovies(keyword);
-      this.setState({ movies: responseMovies, loading: false });
+      this.setState({ loading: true });
+      const responseMovies = await this.movieDBService.searchMovies(page, keyword);
+      const { data, currentPage, totalResults } = responseMovies;
+      this.setState({ movies: data, loading: false, currentSearch: keyword, currentPage, totalResults });
     } catch (er) {
       this.setState({ loadingError: true, loading: false });
     }
-  }
+  };
 
   render() {
-    const { movies, loading, loadingError } = this.state;
-    const errorMessage = 'Sorry, something went wrong. Try to reload the page and repeat';
+    const { loading, loadingError, currentSearch, totalResults, ...data } = this.state;
+    const { errorMessage, noResultsMessage } = App.messages;
+    const alertShow = <Alert message="Bad news" description={errorMessage} showIcon type="error" />;
+    const noResultsShow = <Alert message="Oooops" description={noResultsMessage} showIcon type="info" />;
+    const contentShow = (
+      <MovieList changePages={this.getMoviesData} currentSearch={currentSearch} totalResults={totalResults} {...data} />
+    );
 
-    const error = loadingError ? <Alert message="Bad news" description={errorMessage} showIcon type="error" /> : null;
-    const speaner = loading ? <Speaner /> : null;
-    const content = !(loading || loadingError) ? <MovieList movies={movies} /> : null;
+    const noResults = currentSearch.length && !totalResults && !loading ? noResultsShow : null;
+    const error = loadingError ? alertShow : null;
+    const spinner = loading ? <Spinner /> : null;
+    const content = !(loading || loadingError) ? contentShow : null;
 
     return (
       <div className="container">
-        <Header onChange={this.getMovie} />
+        <Header newSearch={this.getMoviesData} />
+        {noResults}
         {error}
-        {speaner}
+        {spinner}
         {content}
       </div>
     );
   }
 }
 
-function Speaner() {
+function Spinner() {
   return (
     <div className="example">
       <Spin size="large" />

@@ -1,4 +1,5 @@
 import { format } from 'date-fns';
+import noFoundPoster from './no_image_poster.png';
 
 export default class MovieDBService {
   _apiKey = 'api_key=b7473b579abba0475a9336164324a2c1';
@@ -11,10 +12,15 @@ export default class MovieDBService {
     return data;
   };
 
-  searchMovies = async (keyword) => {
-    const data = await this.requestFromDB(`/search/movie?${this._apiKey}&query=${keyword}&page=1`);
+  searchMovies = async (page, keyword) => {
+    const response = await this.requestFromDB(`/search/movie?${this._apiKey}&query=${keyword}&page=${page}`);
     const genres = await this.getActualGenresList();
-    return data.results.map((el) => this.createDataMovie(el, genres));
+    const data = response.results.map((el) => this.createDataMovie(el, genres));
+    return {
+      data,
+      currentPage: response.page,
+      totalResults: response.total_results,
+    };
   };
 
   getActualGenresList = async () => {
@@ -27,12 +33,21 @@ export default class MovieDBService {
 
   createDataMovie = (data, genresList) => {
     const genres = data.genre_ids.map((id) => ({ id, name: genresList[id] }));
+    let date;
+    try {
+      date = format(new Date(data.release_date), 'MMM d, y');
+    } catch (err) {
+      date = 'No date info';
+    }
+
+    const poster = data.poster_path ? `https://image.tmdb.org/t/p/w500${data.poster_path}` : noFoundPoster;
+
     return {
       id: data.id,
       title: data.title,
       overview: data.overview,
-      date: format(new Date(data.release_date), 'MMM d, y'),
-      poster: `https://image.tmdb.org/t/p/w500${data.poster_path}`,
+      date,
+      poster,
       genres,
       vote: data.vote_average,
       popularity: Math.trunc(data.popularity) / 10,
