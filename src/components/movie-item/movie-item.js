@@ -30,7 +30,7 @@ export default class MovieItem extends React.Component {
       <div className="movie-item">
         <MovieItemHeader {...other} />
         <p id={id} className="movie-item__overview">
-          {overview}{' '}
+          {overview}
         </p>
         <footer className="movie-item__footer">
           <Rate
