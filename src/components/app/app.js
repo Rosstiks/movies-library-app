@@ -30,14 +30,14 @@ export default class App extends React.Component {
 
   getMoviesData = async (page, keyword) => {
     if (keyword === '') {
-      this.setState({ movies: [], currentSearch: '', totalResults: 0, loading: false });
+      this.setState({ movies: [], currentSearch: '', totalResults: 0, loading: false, loadingError: false });
       return;
     }
     try {
       this.setState({ loading: true });
       const responseMovies = await this.movieDBService.searchMovies(page, keyword);
       const { data, currentPage, totalResults } = responseMovies;
-      this.setState({ movies: data, loading: false, currentSearch: keyword, currentPage, totalResults });
+      this.setState({ movies: data, loading: false, loadingError: false, currentSearch: keyword, currentPage, totalResults });
     } catch (er) {
       this.setState({ loadingError: true, loading: false });
     }
@@ -46,16 +46,16 @@ export default class App extends React.Component {
   render() {
     const { loading, loadingError, currentSearch, totalResults, ...data } = this.state;
     const { errorMessage, noResultsMessage } = App.messages;
-    const alertShow = <Alert message="Bad news" description={errorMessage} showIcon type="error" />;
-    const noResultsShow = <Alert message="Oooops" description={noResultsMessage} showIcon type="info" />;
-    const contentShow = (
+    const errorBlock = <Alert message="Bad news" description={errorMessage} showIcon type="error" />;
+    const noResultsBlock = <Alert message="Oooops" description={noResultsMessage} showIcon type="info" />;
+    const contentBlock = (
       <MovieList changePages={this.getMoviesData} currentSearch={currentSearch} totalResults={totalResults} {...data} />
     );
 
-    const noResults = currentSearch.length && !totalResults && !loading ? noResultsShow : null;
-    const error = loadingError ? alertShow : null;
+    const noResults = currentSearch.length && !totalResults && !loading ? noResultsBlock : null;
+    const error = loadingError ? errorBlock : null;
     const spinner = loading ? <Spinner /> : null;
-    const content = !(loading || loadingError) ? contentShow : null;
+    const content = !(loading || loadingError) ? contentBlock : null;
 
     return (
       <div className="container">
