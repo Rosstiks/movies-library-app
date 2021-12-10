@@ -1,78 +1,122 @@
 import React from 'react';
-import { Spin, Alert } from 'antd';
-import MovieDBService from '../../services/moviedb-service/moviedb-service';
-
+import { Tabs } from 'antd';
 import './app.css';
-import MovieList from '../movie-list';
-import Header from '../header';
+import MovieDBService from '../../services/moviedb-service/moviedb-service';
+import ContentTab from '../content-tab';
+import SearchPanel from '../search-panel';
+import { GenresProvider } from '../genres-context';
 
 export default class App extends React.Component {
-  static messages = {
-    errorMessage: 'Sorry, something went wrong. Try to reload the page and repeat.',
-    noResultsMessage: 'Sorry, no results were found. Try to change your request.',
-  };
-
   movieDBService = new MovieDBService();
 
   state = {
-    movies: [],
+    data: [],
+    ratedData: [],
     currentSearch: '',
-    currentPage: 1,
-    totalResults: 0,
-    loading: true,
+    currentPageSearch: 1,
+    currentPageRated: 1,
+    totalResultsSearch: 0,
+    totalResultsRated: 0,
+    loading: false,
     loadingError: false,
+    sessionID: null,
   };
 
   componentDidMount() {
-    const { currentPage, currentSearch } = this.state;
-    this.getMoviesData(currentPage, currentSearch);
+    const { createGuestSession, getGenresList } = this.movieDBService;
+    createGuestSession().then((sessionID) => this.setState({ sessionID }));
+    getGenresList().then((list) => {
+      this.genresList = list;
+    });
   }
 
-  getMoviesData = async (page, keyword) => {
-    if (keyword === '') {
-      this.setState({ movies: [], currentSearch: '', totalResults: 0, loading: false });
+  getData = async (page, keyword, rated, sessionID) => {
+    if (keyword === '' && !rated) {
+      this.setState({ data: [], currentSearch: '', totalResultsSearch: 0, loading: false });
       return;
     }
     try {
+      const { searchMovies } = this.movieDBService;
       this.setState({ loading: true });
-      const responseMovies = await this.movieDBService.searchMovies(page, keyword);
+      const responseMovies = await searchMovies(page, keyword, rated, sessionID);
       const { data, currentPage, totalResults } = responseMovies;
-      this.setState({ movies: data, loading: false, currentSearch: keyword, currentPage, totalResults });
-    } catch (er) {
+      this.setState((prevState) => ({
+        data: rated ? prevState.data : data,
+        ratedData: rated ? data : prevState.ratedData,
+        loading: false,
+        currentSearch: rated ? prevState.currentSearch : keyword,
+        currentPageSearch: rated ? prevState.currentPageSearch : currentPage,
+        currentPageRated: rated ? currentPage : prevState.currentPageRated,
+        totalResultsSearch: rated ? prevState.totalResultsSearch : totalResults,
+      }));
+    } catch (err) {
       this.setState({ loadingError: true, loading: false });
     }
   };
 
-  render() {
-    const { loading, loadingError, currentSearch, totalResults, ...data } = this.state;
-    const { errorMessage, noResultsMessage } = App.messages;
-    const alertShow = <Alert message="Bad news" description={errorMessage} showIcon type="error" />;
-    const noResultsShow = <Alert message="Oooops" description={noResultsMessage} showIcon type="info" />;
-    const contentShow = (
-      <MovieList changePages={this.getMoviesData} currentSearch={currentSearch} totalResults={totalResults} {...data} />
-    );
+  refreshRated = async () => {
+    const { searchMovies } = this.movieDBService;
+    const { sessionID, currentPageRated } = this.state;
+    const ratedData = await searchMovies(currentPageRated, null, true, sessionID);
+    this.setState({
+      ratedData: ratedData.data,
+      totalResultsRated: ratedData.totalResults,
+    });
+  };
 
-    const noResults = currentSearch.length && !totalResults && !loading ? noResultsShow : null;
-    const error = loadingError ? alertShow : null;
-    const spinner = loading ? <Spinner /> : null;
-    const content = !(loading || loadingError) ? contentShow : null;
+  changePageSearch = (page) => {
+    const { currentSearch } = this.state;
+    this.getData(page, currentSearch);
+  };
+
+  changePageRated = (page) => {
+    const { sessionID } = this.state;
+    this.getData(page, null, true, sessionID);
+  };
+
+  render() {
+    const { TabPane } = Tabs;
+    const { data, ratedData, currentPageSearch, currentPageRated, totalResultsSearch, totalResultsRated, ...params } =
+      this.state;
+    const checkRatedData = [...data];
+    checkRatedData.forEach((searchEl) => {
+      ratedData.forEach((el) => {
+        if (searchEl.id === el.id) {
+          // eslint-disable-next-line no-param-reassign
+          searchEl.userRate = el.userRate;
+        }
+      });
+    });
 
     return (
-      <div className="container">
-        <Header newSearch={this.getMoviesData} />
-        {noResults}
-        {error}
-        {spinner}
-        {content}
-      </div>
+      <GenresProvider value={this.genresList}>
+        <div className="container">
+          <Tabs defaultActiveKey="search">
+            <TabPane tab="Search" key="search">
+              <SearchPanel newSearch={this.getData} />
+              <ContentTab
+                search
+                refreshRated={this.refreshRated}
+                data={checkRatedData}
+                totalResults={totalResultsSearch}
+                currentPage={currentPageSearch}
+                changePage={this.changePageSearch}
+                {...params}
+              />
+            </TabPane>
+            <TabPane tab="Rated" key="rated">
+              <ContentTab
+                refreshRated={this.refreshRated}
+                data={ratedData}
+                totalResults={totalResultsRated}
+                currentPage={currentPageRated}
+                changePage={this.changePageRated}
+                {...params}
+              />
+            </TabPane>
+          </Tabs>
+        </div>
+      </GenresProvider>
     );
   }
-}
-
-function Spinner() {
-  return (
-    <div className="example">
-      <Spin size="large" />
-    </div>
-  );
 }

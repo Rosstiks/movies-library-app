@@ -23,8 +23,20 @@
     width: 30px;
     margin-left: 5px;
     margin-bottom: 5px;
-    border: 2px solid #e9d100;
+    border: 2px solid #66e900;
     border-radius: 50%;
+
+    &--low {
+      border-color: #e90000;
+    }
+
+    &--pre-intermediate {
+      border-color: #e97e00;
+    }
+
+    &--intermediate {
+      border-color: #e9d100;
+    }
   }
 
   &__vote {

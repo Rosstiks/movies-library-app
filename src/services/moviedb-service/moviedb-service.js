@@ -6,16 +6,42 @@ export default class MovieDBService {
 
   _apiBase = 'https://api.themoviedb.org/3';
 
+  _imageBase = 'https://image.tmdb.org/t/p/w500';
+
   requestFromDB = async (request) => {
-    const response = await fetch(`${this._apiBase}${request}`);
+    const path = `${this._apiBase}${request}`;
+    const response = await fetch(path);
     const data = await response.json();
     return data;
   };
 
-  searchMovies = async (page, keyword) => {
-    const response = await this.requestFromDB(`/search/movie?${this._apiKey}&query=${keyword}&page=${page}`);
-    const genres = await this.getActualGenresList();
-    const data = response.results.map((el) => this.createDataMovie(el, genres));
+  createGuestSession = async () => {
+    const path = `${this._apiBase}/authentication/guest_session/new?${this._apiKey}`;
+    const response = await fetch(path);
+    const data = await response.json();
+    return data.guest_session_id;
+  };
+
+  rateMovie = async (id, value, sessionID) => {
+    const path = `${this._apiBase}/movie/${id}/rating?${this._apiKey}&guest_session_id=${sessionID}`;
+    const paramsRequest = {
+      method: 'POST',
+      headers: {
+        'Content-type': 'application/json',
+      },
+      body: JSON.stringify({ value }),
+    };
+    const response = await fetch(path, paramsRequest);
+    const data = await response.json();
+    return data;
+  };
+
+  searchMovies = async (page, keyword, rated, sessionID) => {
+    const path = rated
+      ? `/guest_session/${sessionID}/rated/movies?${this._apiKey}&page=${page}`
+      : `/search/movie?${this._apiKey}&query=${keyword}&page=${page}`;
+    const response = await this.requestFromDB(path);
+    const data = response.results.map((el) => this.createDataMovie(el));
     return {
       data,
       currentPage: response.page,
@@ -23,16 +49,16 @@ export default class MovieDBService {
     };
   };
 
-  getActualGenresList = async () => {
-    const genresList = await this.requestFromDB(`/genre/movie/list?${this._apiKey}`);
+  getGenresList = async () => {
+    const path = `/genre/movie/list?${this._apiKey}`;
+    const genresList = await this.requestFromDB(path);
     return genresList.genres.reduce((acc, el) => {
       acc[el.id] = el.name;
       return acc;
     }, {});
   };
 
-  createDataMovie = (data, genresList) => {
-    const genres = data.genre_ids.map((id) => ({ id, name: genresList[id] }));
+  createDataMovie = (data) => {
     let date;
     try {
       date = format(new Date(data.release_date), 'MMM d, y');
@@ -40,7 +66,7 @@ export default class MovieDBService {
       date = 'No date info';
     }
 
-    const poster = data.poster_path ? `https://image.tmdb.org/t/p/w500${data.poster_path}` : noFoundPoster;
+    const poster = data.poster_path ? `${this._imageBase}${data.poster_path}` : noFoundPoster;
 
     return {
       id: data.id,
@@ -48,9 +74,9 @@ export default class MovieDBService {
       overview: data.overview,
       date,
       poster,
-      genres,
-      vote: data.vote_average,
-      popularity: Math.trunc(data.popularity) / 10,
+      genresIds: data.genre_ids,
+      globalRate: data.vote_average,
+      userRate: data.rating || 0,
     };
   };
 }

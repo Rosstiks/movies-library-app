@@ -3,9 +3,9 @@ import { Input } from 'antd';
 import PropTypes from 'prop-types';
 import debounce from 'lodash.debounce';
 
-import './header.css';
+import './search-panel.css';
 
-export default class Header extends React.Component {
+export default class SearchPanel extends React.Component {
   static propTypes = {
     newSearch: PropTypes.func.isRequired,
   };
