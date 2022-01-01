@@ -2,7 +2,7 @@ import React from 'react';
 import { Alert } from 'antd';
 import PropTypes from 'prop-types';
 
-export default function AppMessages({ type }) {
+export default function AlertMessages({ type }) {
   const messages = {
     noResult: 'No matches',
     error: 'Bad news',
@@ -18,6 +18,6 @@ export default function AppMessages({ type }) {
   return <Alert message={message} description={description} showIcon type="info" />;
 }
 
-AppMessages.propTypes = {
+AlertMessages.propTypes = {
   type: PropTypes.string.isRequired,
 };

@@ -1,5 +1,5 @@
 import React from 'react';
-import './card-header.css';
+import './card-header.scss';
 import PropTypes, { string } from 'prop-types';
 import classNames from 'classnames';
 

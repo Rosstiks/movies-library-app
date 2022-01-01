@@ -3,7 +3,7 @@ import { Input } from 'antd';
 import PropTypes from 'prop-types';
 import debounce from 'lodash.debounce';
 
-import './search-panel.css';
+import './search-panel.scss';
 
 export default class SearchPanel extends React.Component {
   static propTypes = {

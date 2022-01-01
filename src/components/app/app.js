@@ -1,10 +1,11 @@
 import React from 'react';
 import { Tabs } from 'antd';
-import './app.css';
+import './app.scss';
 import MovieDBService from '../../services/moviedb-service/moviedb-service';
+import cutOverflowContent from '../../utils/cut-overflow-content/cut-overflow-content';
 import ContentTab from '../content-tab';
 import SearchPanel from '../search-panel';
-import { GenresProvider } from '../genres-context';
+import { GenresProvider } from '../../genres-context';
 
 export default class App extends React.Component {
   movieDBService = new MovieDBService();
@@ -37,7 +38,7 @@ export default class App extends React.Component {
     }
     try {
       const { searchMovies } = this.movieDBService;
-      this.setState({ loading: true });
+      this.setState({ loading: true, loadingError: false });
       const responseMovies = await searchMovies(page, keyword, rated, sessionID);
       const { data, currentPage, totalResults } = responseMovies;
       this.setState((prevState) => ({
@@ -91,8 +92,11 @@ export default class App extends React.Component {
     return (
       <GenresProvider value={this.genresList}>
         <div className="container">
-          <Tabs defaultActiveKey="search">
-            <TabPane tab="Search" key="search">
+          <Tabs
+            defaultActiveKey="search"
+            onChange={() => setTimeout(() => cutOverflowContent('.movie-item__overview'), 100)}
+          >
+            <TabPane tab="Search" key="search" forceRender>
               <SearchPanel newSearch={this.getData} />
               <ContentTab
                 search

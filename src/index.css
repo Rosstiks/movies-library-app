@@ -12,7 +12,8 @@ html {
 }
 
 @media (min-width: 374.98px) {
-  body {
+  body,
+  html {
     font-size: 12px;
   }
 }

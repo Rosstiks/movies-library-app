@@ -1,7 +1,8 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { Row, Col, Pagination } from 'antd';
-import './cards-list.css';
+import './cards-list.scss';
+import cutOverflowContent from '../../utils/cut-overflow-content/cut-overflow-content';
 
 import Card from '../card/card';
 
@@ -21,6 +22,10 @@ export default class CardsList extends React.Component {
     currentSearch: '',
     sessionID: null,
   };
+
+  componentDidMount() {
+    cutOverflowContent('.movie-item__overview');
+  }
 
   createMovieList(data) {
     const { sessionID, refreshRated } = this.props;

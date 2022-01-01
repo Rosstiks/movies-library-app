@@ -1,10 +1,9 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { GenresConsumer } from '../genres-context';
-import './card.css';
+import { GenresConsumer } from '../../genres-context';
+import './card.scss';
 import CardHeader from '../card-header';
 import ItemRate from '../item-rate';
-import cutOverflowContent from '../../services/cut-overflow-content/cut-overflow-content';
 import MovieDBService from '../../services/moviedb-service/moviedb-service';
 
 export default class Card extends React.Component {
@@ -23,11 +22,6 @@ export default class Card extends React.Component {
     sessionID: PropTypes.string,
     refreshRated: PropTypes.func.isRequired,
   };
-
-  componentDidMount() {
-    const { id } = this.props;
-    cutOverflowContent(id);
-  }
 
   changeRate = (value) => {
     const { rateMovie } = this.movieDBService;

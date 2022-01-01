@@ -1,35 +1,26 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import CardsList from '../cards-list';
-import AppMessages from '../app-messages';
+import AlertMessages from '../alert-messages';
 import LoadSpinner from '../load-spinner';
 
 export default function ContentTab(props) {
   const { loading, loadingError, currentSearch, totalResults, changePage, refreshRated, search, ...data } = props;
-  const contentData = (
-    <CardsList
-      changePage={changePage}
-      currentSearch={currentSearch}
-      totalResults={totalResults}
-      refreshRated={refreshRated}
-      {...data}
-    />
-  );
-  let noResults = null;
-  if (search) {
-    noResults = !totalResults && !loading && currentSearch ? <AppMessages type="noResult" /> : null;
+
+  if (loadingError) return <AlertMessages type="error" />;
+  if (loading) return <LoadSpinner />;
+  if (!totalResults && !loading && currentSearch && search) return <AlertMessages type="noResult" />;
+  if (!(loading || loadingError)) {
+    return (
+      <CardsList
+        changePage={changePage}
+        currentSearch={currentSearch}
+        totalResults={totalResults}
+        refreshRated={refreshRated}
+        {...data}
+      />
+    );
   }
-  const error = loadingError ? <AppMessages type="error" /> : null;
-  const spinner = loading ? <LoadSpinner /> : null;
-  const content = !(loading || loadingError) ? contentData : null;
-  return (
-    <>
-      {noResults}
-      {error}
-      {spinner}
-      {content}
-    </>
-  );
 }
 
 ContentTab.propTypes = {
