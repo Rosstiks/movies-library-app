@@ -1,7 +1,7 @@
 <h1>App for search movies from MovieDB API </h1>
 
 <h2><a href='https://rosstiks.github.io/movies-library-app/'>Ссылка</a> на Pages</h2>
-<h2><a href='https://movies-library-app.vercel.app/'>Ссылка</a> на Vercel</h2>
+<h2><a href='https://movies-library-app-rosstiks.vercel.app/'>Ссылка</a> на Vercel</h2>
 
 <h2>Для сборки:</h2>
 <h3>npm start</h3>
